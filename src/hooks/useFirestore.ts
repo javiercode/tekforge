@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { db } from '../firebase/firebase';
 import {
   collection,
@@ -57,7 +57,7 @@ export function useFirestore() {
   const [error, setError] = useState<string | null>(null);
 
   // Guardar nueva URL (usamos shortCode como ID del documento)
-  const addUrl = async (urlData: Omit<UrlData, 'id'>) => {
+  const addUrl = useCallback(async (urlData: Omit<UrlData, 'id'>) => {
     setLoading(true);
     setError(null);
     try {
@@ -70,10 +70,10 @@ export function useFirestore() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Obtener URL por shortCode
-  const getUrl = async (shortCode: string) => {
+  const getUrl = useCallback(async (shortCode: string) => {
     setLoading(true);
     setError(null);
     try {
@@ -89,18 +89,18 @@ export function useFirestore() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Incrementar contador de clics
-  const incrementClicks = async (shortCode: string) => {
+  const incrementClicks = useCallback(async (shortCode: string) => {
     const docRef = doc(db, 'urls', shortCode);
     await updateDoc(docRef, {
       clicks: increment(1),
     });
-  };
+  }, []);
 
   // Obtener URLs por userId (para historial)
-  const getUserUrls = async (userId: string) => {
+  const getUserUrls = useCallback(async (userId: string) => {
     setLoading(true);
     setError(null);
     try {
@@ -118,10 +118,10 @@ export function useFirestore() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Eliminar un enlace acortado
-  const deleteUrl = async (shortCode: string) => {
+  const deleteUrl = useCallback(async (shortCode: string) => {
     setLoading(true);
     setError(null);
     try {
@@ -133,10 +133,10 @@ export function useFirestore() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Obtener Bio por username (slug público)
-  const getBio = async (username: string) => {
+  const getBio = useCallback(async (username: string) => {
     setLoading(true);
     setError(null);
     try {
@@ -152,10 +152,10 @@ export function useFirestore() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Obtener Bio por userId (para el creador/editor)
-  const getBioByUserId = async (userId: string) => {
+  const getBioByUserId = useCallback(async (userId: string) => {
     setLoading(true);
     setError(null);
     try {
@@ -171,10 +171,10 @@ export function useFirestore() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Guardar/Actualizar Bio
-  const saveBio = async (bioData: BioData) => {
+  const saveBio = useCallback(async (bioData: BioData) => {
     setLoading(true);
     setError(null);
     try {
@@ -186,10 +186,10 @@ export function useFirestore() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Incrementar contador de visualizaciones de la Bio
-  const incrementBioViews = async (username: string) => {
+  const incrementBioViews = useCallback(async (username: string) => {
     try {
       const docRef = doc(db, 'bios', username.toLowerCase());
       await updateDoc(docRef, {
@@ -198,7 +198,7 @@ export function useFirestore() {
     } catch (err) {
       console.error('Error al incrementar vistas de bio:', err);
     }
-  };
+  }, []);
 
   return {
     addUrl,

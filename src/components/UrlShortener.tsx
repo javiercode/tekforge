@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useFirestore, UrlData } from '../hooks/useFirestore';
 import { generateShortCode } from '../utils/generateShortCode';
@@ -67,7 +67,7 @@ export default function UrlShortener() {
   const [loadingUrls, setLoadingUrls] = useState(false);
   const [copiedUrlCode, setCopiedUrlCode] = useState<string | null>(null);
 
-  const fetchUserUrls = async () => {
+  const fetchUserUrls = useCallback(async () => {
     if (!user) return;
     setLoadingUrls(true);
     try {
@@ -78,15 +78,15 @@ export default function UrlShortener() {
     } finally {
       setLoadingUrls(false);
     }
-  };
+  }, [user, getUserUrls]);
 
   useEffect(() => {
     if (user) {
       fetchUserUrls();
     } else {
-      setUserUrls([]);
+      setUserUrls((prev) => prev.length === 0 ? prev : []);
     }
-  }, [user]);
+  }, [user, fetchUserUrls]);
 
   const handleDeleteUrl = async (shortCode: string) => {
     if (!window.confirm('¿Estás seguro de que deseas eliminar este enlace acortado?')) return;

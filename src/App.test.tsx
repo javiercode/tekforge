@@ -12,17 +12,27 @@ jest.mock('./hooks/useAuth', () => ({
   }),
 }));
 
+const mockAddUrl = jest.fn();
+const mockGetUrl = jest.fn();
+const mockIncrementClicks = jest.fn();
+const mockGetUserUrls = jest.fn().mockResolvedValue([]);
+const mockDeleteUrl = jest.fn();
+const mockGetBio = jest.fn();
+const mockGetBioByUserId = jest.fn();
+const mockSaveBio = jest.fn();
+const mockIncrementBioViews = jest.fn();
+
 jest.mock('./hooks/useFirestore', () => ({
   useFirestore: () => ({
-    addUrl: jest.fn(),
-    getUrl: jest.fn(),
-    incrementClicks: jest.fn(),
-    getUserUrls: jest.fn().mockResolvedValue([]),
-    deleteUrl: jest.fn(),
-    getBio: jest.fn(),
-    getBioByUserId: jest.fn(),
-    saveBio: jest.fn(),
-    incrementBioViews: jest.fn(),
+    addUrl: mockAddUrl,
+    getUrl: mockGetUrl,
+    incrementClicks: mockIncrementClicks,
+    getUserUrls: mockGetUserUrls,
+    deleteUrl: mockDeleteUrl,
+    getBio: mockGetBio,
+    getBioByUserId: mockGetBioByUserId,
+    saveBio: mockSaveBio,
+    incrementBioViews: mockIncrementBioViews,
     loading: false,
     error: null,
   }),
