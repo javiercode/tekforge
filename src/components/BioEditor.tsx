@@ -155,7 +155,8 @@ export default function BioEditor() {
       setBioData(newBio);
       setHasBio(true);
     } catch (err) {
-      setSetupError('Error al crear tu página de enlaces.');
+      console.error('Error al crear bio:', err);
+      setSetupError(`Error al crear tu página de enlaces: ${err instanceof Error ? err.message : 'Error desconocido'}`);
     } finally {
       setLoading(false);
     }
