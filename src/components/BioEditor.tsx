@@ -147,6 +147,7 @@ export default function BioEditor() {
       // Crear bio inicial
       const newBio: BioData = {
         ...bioData,
+        userId: user ? user.uid : '',
         username: slug,
         createdAt: new Date().toISOString(),
       };

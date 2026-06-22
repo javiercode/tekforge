@@ -40,12 +40,14 @@ import PortraitIcon from '@mui/icons-material/Portrait';
 import DeleteIcon from '@mui/icons-material/Delete';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import TextFieldsIcon from '@mui/icons-material/TextFields';
 
 export default function UrlShortener() {
   // Navigation / Tabs State
   const [tabValue, setTabValue] = useState(0);
 
   // Link Shortener State
+  const [shortenType, setShortenType] = useState<'simple' | 'custom'>('simple');
   const [originalUrl, setOriginalUrl] = useState('');
   const [shortUrl, setShortUrl] = useState('');
   const [loading, setLoading] = useState(false);
@@ -61,6 +63,7 @@ export default function UrlShortener() {
   const [customLinkCopied, setCustomLinkCopied] = useState(false);
 
   // QR Code Generator State
+  const [qrType, setQrType] = useState<'url' | 'text'>('url');
   const [qrInputUrl, setQrInputUrl] = useState('');
   const [qrValue, setQrValue] = useState('');
   const [qrColor, setQrColor] = useState('#000000');
@@ -226,15 +229,33 @@ export default function UrlShortener() {
     }
   };
 
+  const handleQrTypeChange = (newType: 'url' | 'text') => {
+    setQrType(newType);
+    setQrInputUrl('');
+    setQrValue('');
+    setError('');
+  };
+
   const handleQrSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!qrInputUrl) return;
-    try {
-      new URL(qrInputUrl);
+
+    if (qrType === 'url') {
+      try {
+        new URL(qrInputUrl);
+        setQrValue(qrInputUrl);
+        setError('');
+      } catch (err) {
+        setError('URL inválida. Asegúrate de incluir http:// o https://');
+      }
+    } else {
+      const maxChars = qrSize === 128 ? 150 : qrSize === 256 ? 300 : 600;
+      if (qrInputUrl.length > maxChars) {
+        setError(`El texto es demasiado largo para un QR de ${qrSize}px. Máximo ${maxChars} caracteres.`);
+        return;
+      }
       setQrValue(qrInputUrl);
       setError('');
-    } catch (err) {
-      setError('URL inválida. Asegúrate de incluir http:// o https://');
     }
   };
 
@@ -275,7 +296,7 @@ export default function UrlShortener() {
   };
 
   return (
-    <Box sx={{ maxWidth: tabValue === 3 ? 1100 : 700, margin: '0 auto', px: 2, transition: 'max-width 0.3s' }}>
+    <Box sx={{ maxWidth: tabValue === 2 ? 1100 : 700, margin: '0 auto', px: 2, transition: 'max-width 0.3s' }}>
       {/* Title & Subtitle Section */}
       <Box sx={{ textAlign: 'center', mb: 5 }}>
         <Typography
@@ -319,9 +340,8 @@ export default function UrlShortener() {
             },
           }}
         >
-          <Tab icon={<LinkIcon />} iconPosition="start" label="Acortar URL" />
-          <Tab icon={<LinkIcon />} iconPosition="start" label="Enlace Personalizado" />
           <Tab icon={<QrCodeIcon />} iconPosition="start" label="Código QR" />
+          <Tab icon={<LinkIcon />} iconPosition="start" label="Acortar URL" />
           <Tab icon={<PortraitIcon />} iconPosition="start" label="Página de Enlace" />
         </Tabs>
 
@@ -332,632 +352,84 @@ export default function UrlShortener() {
             </Alert>
           )}
 
-          {/* TAB 1: SHORTEN URL */}
+          {/* TAB 0: QR CODE GENERATOR */}
           {tabValue === 0 && (
             <Box>
-              {!user ? (
-                <Box sx={{ textAlign: 'center', py: 4, px: 2 }}>
-                  <Alert severity="warning" sx={{ mb: 4, borderRadius: 3, textAlign: 'left', fontSize: '1rem', py: 2 }}>
-                    La función de acortar URLs requiere iniciar sesión en este momento. Por favor, inicia sesión con Google para poder acortar tus enlaces, generar códigos QR personalizados y ver el historial y estadísticas de clics de tus enlaces.
-                  </Alert>
-                  <Button
-                    variant="contained"
-                    color="secondary"
-                    size="large"
-                    onClick={signInWithGoogle}
-                    sx={{
-                      py: 1.8,
-                      px: 5,
-                      fontSize: '1.1rem',
-                      fontWeight: 700,
-                      borderRadius: 3,
-                      boxShadow: '0 4px 14px rgba(0,0,0,0.1)',
-                    }}
-                  >
-                    Iniciar Sesión con Google
-                  </Button>
-                </Box>
-              ) : (
-                <>
-                  <Box component="form" onSubmit={handleShortenSubmit} noValidate>
-                    <TextField
-                      fullWidth
-                      label="Pega tu URL larga aquí"
-                      placeholder="https://ejemplo.com/mi-pagina-super-larga-e-increible"
-                      value={originalUrl}
-                      onChange={(e) => setOriginalUrl(e.target.value)}
-                      disabled={loading}
-                      required
-                      variant="outlined"
-                      slotProps={{
-                        input: {
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <LinkIcon color="action" />
-                            </InputAdornment>
-                          ),
-                        },
-                      }}
-                      sx={{ mb: 3 }}
+              <Box sx={{ mb: 3, display: 'flex', justifyContent: 'center' }}>
+                <FormControl component="fieldset">
+                  <FormLabel component="legend" sx={{ fontWeight: 600, mb: 1, fontSize: '0.9rem', textAlign: 'center' }}>
+                    Tipo de Contenido para el QR
+                  </FormLabel>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Chip
+                      icon={<LinkIcon />}
+                      label="Enlace (URL)"
+                      onClick={() => handleQrTypeChange('url')}
+                      color={qrType === 'url' ? 'secondary' : 'default'}
+                      variant={qrType === 'url' ? 'filled' : 'outlined'}
+                      clickable
                     />
-
-                    <Button
-                      type="submit"
-                      fullWidth
-                      variant="contained"
-                      color="secondary"
-                      size="large"
-                      disabled={loading || !originalUrl}
-                      endIcon={<KeyboardArrowRightIcon />}
-                      sx={{
-                        py: 1.5,
-                        fontSize: '1.1rem',
-                        boxShadow: 'none',
-                        '&:hover': {
-                          boxShadow: 'none',
-                          bgcolor: 'secondary.dark',
-                        },
-                      }}
-                    >
-                      {loading ? 'Acortando...' : 'Acortar URL'}
-                    </Button>
+                    <Chip
+                      icon={<TextFieldsIcon />}
+                      label="Texto Libre"
+                      onClick={() => handleQrTypeChange('text')}
+                      color={qrType === 'text' ? 'secondary' : 'default'}
+                      variant={qrType === 'text' ? 'filled' : 'outlined'}
+                      clickable
+                    />
                   </Box>
+                </FormControl>
+              </Box>
 
-                  {/* Short url output card */}
-                  {shortUrl && (
-                    <Paper
-                      elevation={0}
-                      sx={{
-                        mt: 4,
-                        p: { xs: 2, sm: 3 },
-                        bgcolor: 'grey.50',
-                        border: '1px solid',
-                        borderColor: 'grey.200',
-                        borderRadius: 3,
-                      }}
-                    >
-                      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                        ¡Tu enlace acortado está listo!
-                      </Typography>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          flexDirection: { xs: 'column', sm: 'row' },
-                          alignItems: { xs: 'stretch', sm: 'center' },
-                          gap: 2,
-                          mt: 1,
-                          mb: 3,
-                        }}
-                      >
-                        <Typography
-                          variant="h6"
-                          component="a"
-                          href={shortUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          sx={{
-                            color: 'secondary.main',
-                            textDecoration: 'none',
-                            wordBreak: 'break-all',
-                            fontWeight: 700,
-                            flexGrow: 1,
-                            '&:hover': {
-                              textDecoration: 'underline',
-                            },
-                          }}
-                        >
-                          {shortUrl}
-                        </Typography>
-                        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-                          <Tooltip title={linkCopied ? '¡Copiado!' : 'Copiar enlace'}>
-                            <Button
-                              variant="outlined"
-                              color={linkCopied ? 'success' : 'primary'}
-                              onClick={copyToClipboard}
-                              startIcon={linkCopied ? <CheckIcon /> : <ContentCopyIcon />}
-                              sx={{ minWidth: 110 }}
-                            >
-                              {linkCopied ? 'Copiado' : 'Copiar'}
-                            </Button>
-                          </Tooltip>
-                          <Tooltip title="Abrir enlace">
-                            <IconButton
-                              component="a"
-                              href={shortUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              color="primary"
-                              sx={{ border: '1px solid', borderColor: 'grey.300', borderRadius: 2 }}
-                            >
-                              <OpenInNewIcon />
-                            </IconButton>
-                          </Tooltip>
-                        </Box>
-                      </Box>
-
-                      <Divider sx={{ my: 2.5 }} />
-
-                      {/* QR Code Integrado para Enlace Corto */}
-                      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'center', gap: 3 }}>
-                        <Paper
-                          elevation={0}
-                          sx={{
-                            p: 1.5,
-                            bgcolor: '#ffffff',
-                            border: '1px solid',
-                            borderColor: 'grey.300',
-                            borderRadius: 2,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <QRCodeCanvas
-                            id="shortened-qr-canvas"
-                            value={shortUrl}
-                            size={130}
-                            fgColor="#0c1a30"
-                            bgColor="#ffffff"
-                            level="Q"
-                            includeMargin={true}
-                          />
-                        </Paper>
-                        <Box sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
-                          <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5 }}>
-                            Código QR de tu Enlace Corto
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ mb: 2, maxWidth: 350 }}>
-                            Escanea o descarga este código QR asociado directamente a tu enlace acortado para compartirlo de manera impresa.
-                          </Typography>
-                          <Button
-                            variant="contained"
-                            color="primary"
-                            startIcon={<DownloadIcon />}
-                            onClick={downloadShortenedQR}
-                            size="small"
-                          >
-                            Descargar QR
-                          </Button>
-                        </Box>
-                      </Box>
-                    </Paper>
-                  )}
-                </>
-              )}
-
-              {user && (
-                <Box sx={{ mt: 5 }}>
-                  <Divider sx={{ mb: 4 }} />
-                  <Typography variant="h6" sx={{ fontWeight: 850, mb: 3 }}>
-                    📊 Tus Enlaces Acortados
-                  </Typography>
-
-                  {loadingUrls ? (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                      <CircularProgress size={32} />
-                    </Box>
-                  ) : userUrls.length === 0 ? (
-                    <Paper
-                      elevation={0}
-                      sx={{
-                        p: 4,
-                        textAlign: 'center',
-                        border: '1px dashed',
-                        borderColor: 'grey.300',
-                        borderRadius: 3,
-                        bgcolor: 'rgba(0, 0, 0, 0.01)',
-                      }}
-                    >
-                      <Typography variant="body1" color="text.secondary">
-                        Aún no has acortado ningún enlace. ¡Pega una URL arriba para comenzar!
-                      </Typography>
-                    </Paper>
-                  ) : (
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      {userUrls.map((urlItem) => {
-                        const fullShortUrl = `${window.location.origin}/${urlItem.shortCode}`;
-                        return (
-                          <Paper
-                            key={urlItem.shortCode}
-                            elevation={0}
-                            sx={{
-                              p: { xs: 2, sm: 3 },
-                              border: '1px solid',
-                              borderColor: 'grey.200',
-                              borderRadius: 3,
-                              bgcolor: 'background.paper',
-                              '&:hover': {
-                                boxShadow: '0px 4px 12px rgba(0,0,0,0.03)',
-                                borderColor: 'grey.300',
-                              },
-                              transition: 'box-shadow 0.2s, border-color 0.2s',
-                            }}
-                          >
-                            <Grid container spacing={2} sx={{ alignItems: 'center' }}>
-                              {/* Left: Info */}
-                              <Grid size={{ xs: 12, md: 7 }}>
-                                <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
-                                  <LinkIcon color="primary" sx={{ mt: 0.5, display: { xs: 'none', sm: 'block' } }} />
-                                  <Box sx={{ width: '100%', overflow: 'hidden' }}>
-                                    <Typography
-                                      variant="subtitle1"
-                                      component="a"
-                                      href={fullShortUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      sx={{
-                                        fontWeight: 750,
-                                        color: 'secondary.main',
-                                        textDecoration: 'none',
-                                        wordBreak: 'break-all',
-                                        '&:hover': { textDecoration: 'underline' },
-                                      }}
-                                    >
-                                      {fullShortUrl}
-                                    </Typography>
-                                    <Typography
-                                      variant="body2"
-                                      color="text.secondary"
-                                      noWrap
-                                      sx={{
-                                        mt: 0.5,
-                                        display: 'block',
-                                        textOverflow: 'ellipsis',
-                                        overflow: 'hidden',
-                                        maxWidth: '100%',
-                                      }}
-                                      title={urlItem.originalUrl}
-                                    >
-                                      Destino: {urlItem.originalUrl}
-                                    </Typography>
-                                    <Box sx={{ display: 'flex', gap: 2.5, mt: 1, flexWrap: 'wrap' }}>
-                                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                        <BarChartIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
-                                        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-                                          {urlItem.clicks} {urlItem.clicks === 1 ? 'clic' : 'clics'}
-                                        </Typography>
-                                      </Box>
-                                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                        <CalendarTodayIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
-                                        <Typography variant="caption" color="text.secondary">
-                                          {new Date(urlItem.createdAt).toLocaleDateString()}
-                                        </Typography>
-                                      </Box>
-                                    </Box>
-                                  </Box>
-                                </Box>
-                              </Grid>
-
-                              {/* Right: Actions */}
-                              <Grid size={{ xs: 12, md: 5 }}>
-                                <Box sx={{ display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' }, gap: 1, flexWrap: 'wrap' }}>
-                                  {/* Hidden QRCode for download */}
-                                  <Box sx={{ display: 'none' }}>
-                                    <QRCodeCanvas
-                                      id={`qr-canvas-${urlItem.shortCode}`}
-                                      value={fullShortUrl}
-                                      size={256}
-                                      level="H"
-                                      includeMargin={true}
-                                    />
-                                  </Box>
-                                  <Tooltip title={copiedUrlCode === urlItem.shortCode ? '¡Copiado!' : 'Copiar enlace'}>
-                                    <IconButton
-                                      color={copiedUrlCode === urlItem.shortCode ? 'success' : 'primary'}
-                                      onClick={() => handleCopyHistoryLink(urlItem.shortCode, fullShortUrl)}
-                                      sx={{ border: '1px solid', borderColor: 'grey.200', borderRadius: 2 }}
-                                    >
-                                      {copiedUrlCode === urlItem.shortCode ? <CheckIcon /> : <ContentCopyIcon />}
-                                    </IconButton>
-                                  </Tooltip>
-                                  <Tooltip title="Abrir enlace">
-                                    <IconButton
-                                      component="a"
-                                      href={fullShortUrl}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      color="primary"
-                                      sx={{ border: '1px solid', borderColor: 'grey.200', borderRadius: 2 }}
-                                    >
-                                      <OpenInNewIcon />
-                                    </IconButton>
-                                  </Tooltip>
-                                  <Tooltip title="Descargar QR">
-                                    <IconButton
-                                      onClick={() => downloadHistoryQR(urlItem.shortCode)}
-                                      color="primary"
-                                      sx={{ border: '1px solid', borderColor: 'grey.200', borderRadius: 2 }}
-                                    >
-                                      <DownloadIcon />
-                                    </IconButton>
-                                  </Tooltip>
-                                  <Tooltip title="Eliminar enlace">
-                                    <IconButton
-                                      onClick={() => handleDeleteUrl(urlItem.shortCode)}
-                                      color="error"
-                                      sx={{ border: '1px solid', borderColor: 'grey.200', borderRadius: 2, '&:hover': { bgcolor: '#ffebee' } }}
-                                    >
-                                      <DeleteIcon />
-                                    </IconButton>
-                                  </Tooltip>
-                                </Box>
-                              </Grid>
-                            </Grid>
-                          </Paper>
-                        );
-                      })}
-                    </Box>
-                  )}
-                </Box>
-              )}
-            </Box>
-          )}
-
-          {/* TAB 2: CUSTOM ALIAS URL */}
-          {tabValue === 1 && (
-            <Box>
-              {!user ? (
-                <Box sx={{ textAlign: 'center', py: 4, px: 2 }}>
-                  <Alert severity="warning" sx={{ mb: 4, borderRadius: 3, textAlign: 'left', fontSize: '1rem', py: 2 }}>
-                    La función de enlaces personalizados requiere iniciar sesión. Por favor, inicia sesión con Google para crear alias cortos y únicos para tus enlaces.
-                  </Alert>
-                  <Button
-                    variant="contained"
-                    color="secondary"
-                    size="large"
-                    onClick={signInWithGoogle}
-                    sx={{
-                      py: 1.8,
-                      px: 5,
-                      fontSize: '1.1rem',
-                      fontWeight: 700,
-                      borderRadius: 3,
-                      boxShadow: '0 4px 14px rgba(0,0,0,0.1)',
-                    }}
-                  >
-                    Iniciar Sesión con Google
-                  </Button>
-                </Box>
-              ) : (
-                <>
-                  {customError && (
-                    <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
-                      {customError}
-                    </Alert>
-                  )}
-
-                  <Box component="form" onSubmit={handleCustomShortenSubmit} noValidate>
-                    <TextField
-                      fullWidth
-                      label="Pega tu URL larga aquí"
-                      placeholder="https://ejemplo.com/mi-pagina-super-larga-e-increible"
-                      value={customOriginalUrl}
-                      onChange={(e) => setCustomOriginalUrl(e.target.value)}
-                      disabled={customLoading}
-                      required
-                      variant="outlined"
-                      slotProps={{
-                        input: {
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <LinkIcon color="action" />
-                            </InputAdornment>
-                          ),
-                        },
-                      }}
-                      sx={{ mb: 3 }}
-                    />
-
-                    <TextField
-                      fullWidth
-                      label="Escribe tu Alias Personalizado"
-                      placeholder="ej: mi-portafolio, promo2026, etc."
-                      value={customAlias}
-                      onChange={(e) => setCustomAlias(e.target.value)}
-                      disabled={customLoading}
-                      required
-                      variant="outlined"
-                      slotProps={{
-                        input: {
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, mr: 0.5 }}>
-                                {window.location.host}/
-                              </Typography>
-                            </InputAdornment>
-                          ),
-                        },
-                      }}
-                      helperText="Solo letras minúsculas, números, guiones y guiones bajos (mínimo 3 caracteres)."
-                      sx={{ mb: 3 }}
-                    />
-
-                    <Button
-                      type="submit"
-                      fullWidth
-                      variant="contained"
-                      color="secondary"
-                      size="large"
-                      disabled={customLoading || !customOriginalUrl || !customAlias}
-                      endIcon={<KeyboardArrowRightIcon />}
-                      sx={{
-                        py: 1.5,
-                        fontSize: '1.1rem',
-                        boxShadow: 'none',
-                        '&:hover': {
-                          boxShadow: 'none',
-                          bgcolor: 'secondary.dark',
-                        },
-                      }}
-                    >
-                      {customLoading ? 'Creando enlace...' : 'Crear Enlace Personalizado'}
-                    </Button>
-                  </Box>
-
-                  {/* Custom Short url output card */}
-                  {customShortUrl && (
-                    <Paper
-                      elevation={0}
-                      sx={{
-                        mt: 4,
-                        p: { xs: 2, sm: 3 },
-                        bgcolor: 'grey.50',
-                        border: '1px solid',
-                        borderColor: 'grey.200',
-                        borderRadius: 3,
-                      }}
-                    >
-                      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                        ¡Tu enlace personalizado está listo!
-                      </Typography>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          flexDirection: { xs: 'column', sm: 'row' },
-                          alignItems: { xs: 'stretch', sm: 'center' },
-                          gap: 2,
-                          mt: 1,
-                          mb: 3,
-                        }}
-                      >
-                        <Typography
-                          variant="h6"
-                          component="a"
-                          href={customShortUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          sx={{
-                            color: 'secondary.main',
-                            textDecoration: 'none',
-                            wordBreak: 'break-all',
-                            fontWeight: 700,
-                            flexGrow: 1,
-                            '&:hover': {
-                              textDecoration: 'underline',
-                            },
-                          }}
-                        >
-                          {customShortUrl}
-                        </Typography>
-                        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
-                          <Tooltip title={customLinkCopied ? '¡Copiado!' : 'Copiar enlace'}>
-                            <Button
-                              variant="outlined"
-                              color={customLinkCopied ? 'success' : 'primary'}
-                              onClick={() => {
-                                navigator.clipboard.writeText(customShortUrl);
-                                setCustomLinkCopied(true);
-                                setTimeout(() => setCustomLinkCopied(false), 2000);
-                              }}
-                              startIcon={customLinkCopied ? <CheckIcon /> : <ContentCopyIcon />}
-                              sx={{ minWidth: 110 }}
-                            >
-                              {customLinkCopied ? 'Copiado' : 'Copiar'}
-                            </Button>
-                          </Tooltip>
-                          <Tooltip title="Abrir enlace">
-                            <IconButton
-                              component="a"
-                              href={customShortUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              color="primary"
-                              sx={{ border: '1px solid', borderColor: 'grey.300', borderRadius: 2 }}
-                            >
-                              <OpenInNewIcon />
-                            </IconButton>
-                          </Tooltip>
-                        </Box>
-                      </Box>
-
-                      <Divider sx={{ my: 2.5 }} />
-
-                      {/* QR Code Integrado para Enlace Personalizado */}
-                      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'center', gap: 3 }}>
-                        <Paper
-                          elevation={0}
-                          sx={{
-                            p: 1.5,
-                            bgcolor: '#ffffff',
-                            border: '1px solid',
-                            borderColor: 'grey.300',
-                            borderRadius: 2,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <QRCodeCanvas
-                            id="custom-shortened-qr-canvas"
-                            value={customShortUrl}
-                            size={130}
-                            fgColor="#0c1a30"
-                            bgColor="#ffffff"
-                            level="Q"
-                            includeMargin={true}
-                          />
-                        </Paper>
-                        <Box sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
-                          <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5 }}>
-                            Código QR de tu Enlace Personalizado
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ mb: 2, maxWidth: 350 }}>
-                            Escanea o descarga este código QR asociado directamente a tu enlace personalizado para compartirlo.
-                          </Typography>
-                          <Button
-                            variant="contained"
-                            color="primary"
-                            startIcon={<DownloadIcon />}
-                            onClick={() => {
-                              const canvas = document.getElementById('custom-shortened-qr-canvas') as HTMLCanvasElement | null;
-                              if (canvas) {
-                                const pngUrl = canvas
-                                  .toDataURL('image/png')
-                                  .replace('image/png', 'image/octet-stream');
-                                const downloadLink = document.createElement('a');
-                                downloadLink.href = pngUrl;
-                                downloadLink.download = `qr_custom_${Date.now()}.png`;
-                                document.body.appendChild(downloadLink);
-                                downloadLink.click();
-                                document.body.removeChild(downloadLink);
-                              }
-                            }}
-                            size="small"
-                          >
-                            Descargar QR
-                          </Button>
-                        </Box>
-                      </Box>
-                    </Paper>
-                  )}
-                </>
-              )}
-            </Box>
-          )}
-
-          {/* TAB 3: QR CODE GENERATOR */}
-          {tabValue === 2 && (
-            <Box>
               <Box component="form" onSubmit={handleQrSubmit} noValidate>
-                <TextField
-                  fullWidth
-                  label="Introduce la URL para el código QR"
-                  placeholder="https://ejemplo.com"
-                  value={qrInputUrl}
-                  onChange={(e) => setQrInputUrl(e.target.value)}
-                  required
-                  variant="outlined"
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <QrCodeIcon color="action" />
-                        </InputAdornment>
-                      ),
-                    },
-                  }}
-                  sx={{ mb: 3 }}
-                />
+                {qrType === 'url' ? (
+                  <TextField
+                    fullWidth
+                    label="Introduce la URL para el código QR"
+                    placeholder="https://ejemplo.com"
+                    value={qrInputUrl}
+                    onChange={(e) => setQrInputUrl(e.target.value)}
+                    required
+                    type="url"
+                    variant="outlined"
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <LinkIcon color="action" />
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                    sx={{ mb: 3 }}
+                  />
+                ) : (
+                  <TextField
+                    fullWidth
+                    label="Introduce el texto para el código QR"
+                    placeholder="Escribe el texto que deseas codificar en el código QR..."
+                    value={qrInputUrl}
+                    onChange={(e) => setQrInputUrl(e.target.value)}
+                    required
+                    multiline
+                    rows={3}
+                    variant="outlined"
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 1 }}>
+                            <TextFieldsIcon color="action" />
+                          </InputAdornment>
+                        ),
+                      },
+                      htmlInput: {
+                        maxLength: qrSize === 128 ? 150 : qrSize === 256 ? 300 : 600
+                      }
+                    }}
+                    helperText={`${qrInputUrl.length} / ${qrSize === 128 ? 150 : qrSize === 256 ? 300 : 600} caracteres (límite adaptado al tamaño de la imagen de ${qrSize}px)`}
+                    sx={{ mb: 3 }}
+                  />
+                )}
 
                 <Grid container spacing={3} sx={{ mb: 3 }}>
                   <Grid size={{ xs: 12, sm: 6 }}>
@@ -1147,7 +619,7 @@ export default function UrlShortener() {
                     color="text.secondary"
                     sx={{ mb: 3, wordBreak: 'break-all', textAlign: 'center', maxWidth: '80%' }}
                   >
-                    Contenido: <strong>{qrValue}</strong>
+                    {qrType === 'url' ? 'Enlace:' : 'Texto:'} <strong>{qrValue}</strong>
                   </Typography>
 
                   <Box sx={{ display: 'flex', gap: 2 }}>
@@ -1160,25 +632,633 @@ export default function UrlShortener() {
                     >
                       Descargar PNG
                     </Button>
-                    <Button
-                      variant="outlined"
-                      color="primary"
-                      component="a"
-                      href={qrValue}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      startIcon={<OpenInNewIcon />}
-                    >
-                      Probar enlace
-                    </Button>
+                    {qrType === 'url' && (
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        component="a"
+                        href={qrValue}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        startIcon={<OpenInNewIcon />}
+                      >
+                        Probar enlace
+                      </Button>
+                    )}
                   </Box>
                 </Box>
               )}
             </Box>
           )}
 
-          {/* TAB 4: LINK-IN-BIO PAGES */}
-          {tabValue === 3 && (
+          {/* TAB 1: SHORTEN URL (UNIFIED SIMPLE & CUSTOM ALIAS) */}
+          {tabValue === 1 && (
+            <Box>
+              {!user ? (
+                <Box sx={{ textAlign: 'center', py: 4, px: 2 }}>
+                  <Alert severity="warning" sx={{ mb: 4, borderRadius: 3, textAlign: 'left', fontSize: '1rem', py: 2 }}>
+                    La función de acortar URLs requiere iniciar sesión en este momento. Por favor, inicia sesión con Google para poder acortar tus enlaces, generar códigos QR personalizados y ver el historial y estadísticas de clics de tus enlaces.
+                  </Alert>
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    size="large"
+                    onClick={signInWithGoogle}
+                    sx={{
+                      py: 1.8,
+                      px: 5,
+                      fontSize: '1.1rem',
+                      fontWeight: 700,
+                      borderRadius: 3,
+                      boxShadow: '0 4px 14px rgba(0,0,0,0.1)',
+                    }}
+                  >
+                    Iniciar Sesión con Google
+                  </Button>
+                </Box>
+              ) : (
+                <>
+                  {/* Selector of Shorten Link Type via Radio Buttons */}
+                  <Box sx={{ mb: 4, display: 'flex', justifyContent: 'center' }}>
+                    <FormControl component="fieldset">
+                      <FormLabel component="legend" sx={{ fontWeight: 700, mb: 1, fontSize: '0.95rem', textAlign: 'center', color: 'text.primary' }}>
+                        Tipo de Enlace Acortador
+                      </FormLabel>
+                      <RadioGroup
+                        row
+                        value={shortenType}
+                        onChange={(e) => {
+                          setShortenType(e.target.value as 'simple' | 'custom');
+                          setError('');
+                          setCustomError('');
+                        }}
+                      >
+                        <FormControlLabel
+                          value="simple"
+                          control={<Radio color="secondary" size="small" />}
+                          label={<Typography variant="body2" sx={{ fontWeight: 600 }}>Enlace Simple (Automático)</Typography>}
+                          sx={{ mr: { xs: 1, sm: 3 } }}
+                        />
+                        <FormControlLabel
+                          value="custom"
+                          control={<Radio color="secondary" size="small" />}
+                          label={<Typography variant="body2" sx={{ fontWeight: 600 }}>Alias Personalizado</Typography>}
+                        />
+                      </RadioGroup>
+                    </FormControl>
+                  </Box>
+
+                  {/* Render based on selected type */}
+                  {shortenType === 'simple' ? (
+                    <Box component="form" onSubmit={handleShortenSubmit} noValidate>
+                      <TextField
+                        fullWidth
+                        label="Pega tu URL larga aquí"
+                        placeholder="https://ejemplo.com/mi-pagina-super-larga-e-increible"
+                        value={originalUrl}
+                        onChange={(e) => setOriginalUrl(e.target.value)}
+                        disabled={loading}
+                        required
+                        variant="outlined"
+                        slotProps={{
+                          input: {
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <LinkIcon color="action" />
+                              </InputAdornment>
+                            ),
+                          },
+                        }}
+                        sx={{ mb: 3 }}
+                      />
+
+                      <Button
+                        type="submit"
+                        fullWidth
+                        variant="contained"
+                        color="secondary"
+                        size="large"
+                        disabled={loading || !originalUrl}
+                        endIcon={<KeyboardArrowRightIcon />}
+                        sx={{
+                          py: 1.5,
+                          fontSize: '1.1rem',
+                          boxShadow: 'none',
+                          '&:hover': {
+                            boxShadow: 'none',
+                            bgcolor: 'secondary.dark',
+                          },
+                        }}
+                      >
+                        {loading ? 'Acortando...' : 'Acortar URL'}
+                      </Button>
+                    </Box>
+                  ) : (
+                    <Box component="form" onSubmit={handleCustomShortenSubmit} noValidate>
+                      {customError && (
+                        <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+                          {customError}
+                        </Alert>
+                      )}
+
+                      <TextField
+                        fullWidth
+                        label="Pega tu URL larga aquí"
+                        placeholder="https://ejemplo.com/mi-pagina-super-larga-e-increible"
+                        value={customOriginalUrl}
+                        onChange={(e) => setCustomOriginalUrl(e.target.value)}
+                        disabled={customLoading}
+                        required
+                        variant="outlined"
+                        slotProps={{
+                          input: {
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <LinkIcon color="action" />
+                              </InputAdornment>
+                            ),
+                          },
+                        }}
+                        sx={{ mb: 3 }}
+                      />
+
+                      <TextField
+                        fullWidth
+                        label="Escribe tu Alias Personalizado"
+                        placeholder="ej: mi-portafolio, promo2026, etc."
+                        value={customAlias}
+                        onChange={(e) => setCustomAlias(e.target.value)}
+                        disabled={customLoading}
+                        required
+                        variant="outlined"
+                        slotProps={{
+                          input: {
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, mr: 0.5 }}>
+                                  {window.location.host}/
+                                </Typography>
+                              </InputAdornment>
+                            ),
+                          },
+                        }}
+                        helperText="Solo letras minúsculas, números, guiones y guiones bajos (mínimo 3 caracteres)."
+                        sx={{ mb: 3 }}
+                      />
+
+                      <Button
+                        type="submit"
+                        fullWidth
+                        variant="contained"
+                        color="secondary"
+                        size="large"
+                        disabled={customLoading || !customOriginalUrl || !customAlias}
+                        endIcon={<KeyboardArrowRightIcon />}
+                        sx={{
+                          py: 1.5,
+                          fontSize: '1.1rem',
+                          boxShadow: 'none',
+                          '&:hover': {
+                            boxShadow: 'none',
+                            bgcolor: 'secondary.dark',
+                          },
+                        }}
+                      >
+                        {customLoading ? 'Creando enlace...' : 'Crear Enlace Personalizado'}
+                      </Button>
+                    </Box>
+                  )}
+
+                  {/* Short url output card for Simple shorten links */}
+                  {shortenType === 'simple' && shortUrl && (
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        mt: 4,
+                        p: { xs: 2, sm: 3 },
+                        bgcolor: 'grey.50',
+                        border: '1px solid',
+                        borderColor: 'grey.200',
+                        borderRadius: 3,
+                      }}
+                    >
+                      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                        ¡Tu enlace acortado está listo!
+                      </Typography>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          flexDirection: { xs: 'column', sm: 'row' },
+                          alignItems: { xs: 'stretch', sm: 'center' },
+                          gap: 2,
+                          mt: 1,
+                          mb: 3,
+                        }}
+                      >
+                        <Typography
+                          variant="h6"
+                          component="a"
+                          href={shortUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          sx={{
+                            color: 'secondary.main',
+                            textDecoration: 'none',
+                            wordBreak: 'break-all',
+                            fontWeight: 700,
+                            flexGrow: 1,
+                            '&:hover': {
+                              textDecoration: 'underline',
+                            },
+                          }}
+                        >
+                          {shortUrl}
+                        </Typography>
+                        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                          <Tooltip title={linkCopied ? '¡Copiado!' : 'Copiar enlace'}>
+                            <Button
+                              variant="outlined"
+                              color={linkCopied ? 'success' : 'primary'}
+                              onClick={copyToClipboard}
+                              startIcon={linkCopied ? <CheckIcon /> : <ContentCopyIcon />}
+                              sx={{ minWidth: 110 }}
+                            >
+                              {linkCopied ? 'Copiado' : 'Copiar'}
+                            </Button>
+                          </Tooltip>
+                          <Tooltip title="Abrir enlace">
+                            <IconButton
+                              component="a"
+                              href={shortUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              color="primary"
+                              sx={{ border: '1px solid', borderColor: 'grey.300', borderRadius: 2 }}
+                            >
+                              <OpenInNewIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </Box>
+
+                      <Divider sx={{ my: 2.5 }} />
+
+                      {/* QR Code Integrado para Enlace Corto */}
+                      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'center', gap: 3 }}>
+                        <Paper
+                          elevation={0}
+                          sx={{
+                            p: 1.5,
+                            bgcolor: '#ffffff',
+                            border: '1px solid',
+                            borderColor: 'grey.300',
+                            borderRadius: 2,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <QRCodeCanvas
+                            id="shortened-qr-canvas"
+                            value={shortUrl}
+                            size={130}
+                            fgColor="#0c1a30"
+                            bgColor="#ffffff"
+                            level="Q"
+                            includeMargin={true}
+                          />
+                        </Paper>
+                        <Box sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5 }}>
+                            Código QR de tu Enlace Corto
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 2, maxWidth: 350 }}>
+                            Escanea o descarga este código QR asociado directamente a tu enlace acortado para compartirlo de manera impresa.
+                          </Typography>
+                          <Button
+                            variant="contained"
+                            color="primary"
+                            startIcon={<DownloadIcon />}
+                            onClick={downloadShortenedQR}
+                            size="small"
+                          >
+                            Descargar QR
+                          </Button>
+                        </Box>
+                      </Box>
+                    </Paper>
+                  )}
+
+                  {/* Custom Short url output card */}
+                  {shortenType === 'custom' && customShortUrl && (
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        mt: 4,
+                        p: { xs: 2, sm: 3 },
+                        bgcolor: 'grey.50',
+                        border: '1px solid',
+                        borderColor: 'grey.200',
+                        borderRadius: 3,
+                      }}
+                    >
+                      <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                        ¡Tu enlace personalizado está listo!
+                      </Typography>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          flexDirection: { xs: 'column', sm: 'row' },
+                          alignItems: { xs: 'stretch', sm: 'center' },
+                          gap: 2,
+                          mt: 1,
+                          mb: 3,
+                        }}
+                      >
+                        <Typography
+                          variant="h6"
+                          component="a"
+                          href={customShortUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          sx={{
+                            color: 'secondary.main',
+                            textDecoration: 'none',
+                            wordBreak: 'break-all',
+                            fontWeight: 700,
+                            flexGrow: 1,
+                            '&:hover': {
+                              textDecoration: 'underline',
+                            },
+                          }}
+                        >
+                          {customShortUrl}
+                        </Typography>
+                        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                          <Tooltip title={customLinkCopied ? '¡Copiado!' : 'Copiar enlace'}>
+                            <Button
+                              variant="outlined"
+                              color={customLinkCopied ? 'success' : 'primary'}
+                              onClick={() => {
+                                navigator.clipboard.writeText(customShortUrl);
+                                setCustomLinkCopied(true);
+                                setTimeout(() => setCustomLinkCopied(false), 2000);
+                              }}
+                              startIcon={customLinkCopied ? <CheckIcon /> : <ContentCopyIcon />}
+                              sx={{ minWidth: 110 }}
+                            >
+                              {customLinkCopied ? 'Copiado' : 'Copiar'}
+                            </Button>
+                          </Tooltip>
+                          <Tooltip title="Abrir enlace">
+                            <IconButton
+                              component="a"
+                              href={customShortUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              color="primary"
+                              sx={{ border: '1px solid', borderColor: 'grey.300', borderRadius: 2 }}
+                            >
+                              <OpenInNewIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </Box>
+                      </Box>
+
+                      <Divider sx={{ my: 2.5 }} />
+
+                      {/* QR Code Integrado para Enlace Personalizado */}
+                      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: 'center', gap: 3 }}>
+                        <Paper
+                          elevation={0}
+                          sx={{
+                            p: 1.5,
+                            bgcolor: '#ffffff',
+                            border: '1px solid',
+                            borderColor: 'grey.300',
+                            borderRadius: 2,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          <QRCodeCanvas
+                            id="custom-shortened-qr-canvas"
+                            value={customShortUrl}
+                            size={130}
+                            fgColor="#0c1a30"
+                            bgColor="#ffffff"
+                            level="Q"
+                            includeMargin={true}
+                          />
+                        </Paper>
+                        <Box sx={{ textAlign: { xs: 'center', sm: 'left' } }}>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5 }}>
+                            Código QR de tu Enlace Personalizado
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 2, maxWidth: 350 }}>
+                            Escanea o descarga este código QR asociado directamente a tu enlace personalizado para compartirlo.
+                          </Typography>
+                          <Button
+                            variant="contained"
+                            color="primary"
+                            startIcon={<DownloadIcon />}
+                            onClick={() => {
+                              const canvas = document.getElementById('custom-shortened-qr-canvas') as HTMLCanvasElement | null;
+                              if (canvas) {
+                                const pngUrl = canvas
+                                  .toDataURL('image/png')
+                                  .replace('image/png', 'image/octet-stream');
+                                const downloadLink = document.createElement('a');
+                                downloadLink.href = pngUrl;
+                                downloadLink.download = `qr_custom_${Date.now()}.png`;
+                                document.body.appendChild(downloadLink);
+                                downloadLink.click();
+                                document.body.removeChild(downloadLink);
+                              }
+                            }}
+                            size="small"
+                          >
+                            Descargar QR
+                          </Button>
+                        </Box>
+                      </Box>
+                    </Paper>
+                  )}
+                </>
+              )}
+
+              {/* Shared Link History at the bottom of Tab 1 */}
+              {user && (
+                <Box sx={{ mt: 5 }}>
+                  <Divider sx={{ mb: 4 }} />
+                  <Typography variant="h6" sx={{ fontWeight: 850, mb: 3 }}>
+                    📊 Tus Enlaces Acortados
+                  </Typography>
+
+                  {loadingUrls ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                      <CircularProgress size={32} />
+                    </Box>
+                  ) : userUrls.length === 0 ? (
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        p: 4,
+                        textAlign: 'center',
+                        border: '1px dashed',
+                        borderColor: 'grey.300',
+                        borderRadius: 3,
+                        bgcolor: 'rgba(0, 0, 0, 0.01)',
+                      }}
+                    >
+                      <Typography variant="body1" color="text.secondary">
+                        Aún no has acortado ningún enlace. ¡Pega una URL arriba para comenzar!
+                      </Typography>
+                    </Paper>
+                  ) : (
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      {userUrls.map((urlItem) => {
+                        const fullShortUrl = `${window.location.origin}/${urlItem.shortCode}`;
+                        return (
+                          <Paper
+                            key={urlItem.shortCode}
+                            elevation={0}
+                            sx={{
+                              p: { xs: 2, sm: 3 },
+                              border: '1px solid',
+                              borderColor: 'grey.200',
+                              borderRadius: 3,
+                              bgcolor: 'background.paper',
+                              '&:hover': {
+                                boxShadow: '0px 4px 12px rgba(0,0,0,0.03)',
+                                borderColor: 'grey.300',
+                              },
+                              transition: 'box-shadow 0.2s, border-color 0.2s',
+                            }}
+                          >
+                            <Grid container spacing={2} sx={{ alignItems: 'center' }}>
+                              {/* Left: Info */}
+                              <Grid size={{ xs: 12, md: 7 }}>
+                                <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-start' }}>
+                                  <LinkIcon color="primary" sx={{ mt: 0.5, display: { xs: 'none', sm: 'block' } }} />
+                                  <Box sx={{ width: '100%', overflow: 'hidden' }}>
+                                    <Typography
+                                      variant="subtitle1"
+                                      component="a"
+                                      href={fullShortUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      sx={{
+                                        fontWeight: 750,
+                                        color: 'secondary.main',
+                                        textDecoration: 'none',
+                                        wordBreak: 'break-all',
+                                        '&:hover': { textDecoration: 'underline' },
+                                      }}
+                                    >
+                                      {fullShortUrl}
+                                    </Typography>
+                                    <Typography
+                                      variant="body2"
+                                      color="text.secondary"
+                                      noWrap
+                                      sx={{
+                                        mt: 0.5,
+                                        display: 'block',
+                                        textOverflow: 'ellipsis',
+                                        overflow: 'hidden',
+                                        maxWidth: '100%',
+                                      }}
+                                      title={urlItem.originalUrl}
+                                    >
+                                      Destino: {urlItem.originalUrl}
+                                    </Typography>
+                                    <Box sx={{ display: 'flex', gap: 2.5, mt: 1, flexWrap: 'wrap' }}>
+                                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                        <BarChartIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
+                                        <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
+                                          {urlItem.clicks} {urlItem.clicks === 1 ? 'clic' : 'clics'}
+                                        </Typography>
+                                      </Box>
+                                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                                        <CalendarTodayIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                                        <Typography variant="caption" color="text.secondary">
+                                          {new Date(urlItem.createdAt).toLocaleDateString()}
+                                        </Typography>
+                                      </Box>
+                                    </Box>
+                                  </Box>
+                                </Box>
+                              </Grid>
+
+                              {/* Right: Actions */}
+                              <Grid size={{ xs: 12, md: 5 }}>
+                                <Box sx={{ display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' }, gap: 1, flexWrap: 'wrap' }}>
+                                  {/* Hidden QRCode for download */}
+                                  <Box sx={{ display: 'none' }}>
+                                    <QRCodeCanvas
+                                      id={`qr-canvas-${urlItem.shortCode}`}
+                                      value={fullShortUrl}
+                                      size={256}
+                                      level="H"
+                                      includeMargin={true}
+                                    />
+                                  </Box>
+                                  <Tooltip title={copiedUrlCode === urlItem.shortCode ? '¡Copiado!' : 'Copiar enlace'}>
+                                    <IconButton
+                                      color={copiedUrlCode === urlItem.shortCode ? 'success' : 'primary'}
+                                      onClick={() => handleCopyHistoryLink(urlItem.shortCode, fullShortUrl)}
+                                      sx={{ border: '1px solid', borderColor: 'grey.200', borderRadius: 2 }}
+                                    >
+                                      {copiedUrlCode === urlItem.shortCode ? <CheckIcon /> : <ContentCopyIcon />}
+                                    </IconButton>
+                                  </Tooltip>
+                                  <Tooltip title="Abrir enlace">
+                                    <IconButton
+                                      component="a"
+                                      href={fullShortUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      color="primary"
+                                      sx={{ border: '1px solid', borderColor: 'grey.200', borderRadius: 2 }}
+                                    >
+                                      <OpenInNewIcon />
+                                    </IconButton>
+                                  </Tooltip>
+                                  <Tooltip title="Descargar QR">
+                                    <IconButton
+                                      onClick={() => downloadHistoryQR(urlItem.shortCode)}
+                                      color="primary"
+                                      sx={{ border: '1px solid', borderColor: 'grey.200', borderRadius: 2 }}
+                                    >
+                                      <DownloadIcon />
+                                    </IconButton>
+                                  </Tooltip>
+                                  <Tooltip title="Eliminar enlace">
+                                    <IconButton
+                                      onClick={() => handleDeleteUrl(urlItem.shortCode)}
+                                      color="error"
+                                      sx={{ border: '1px solid', borderColor: 'grey.200', borderRadius: 2, '&:hover': { bgcolor: '#ffebee' } }}
+                                    >
+                                      <DeleteIcon />
+                                    </IconButton>
+                                  </Tooltip>
+                                </Box>
+                              </Grid>
+                            </Grid>
+                          </Paper>
+                        );
+                      })}
+                    </Box>
+                  )}
+                </Box>
+              )}
+            </Box>
+          )}
+
+          {/* TAB 2: LINK-IN-BIO PAGES */}
+          {tabValue === 2 && (
             <BioEditor />
           )}
         </CardContent>
