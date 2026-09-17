@@ -20,7 +20,6 @@ import {
   TableHead,
   TableRow,
   IconButton,
-  Chip,
   Tooltip,
 } from '@mui/material';
 import LinkIcon from '@mui/icons-material/Link';
@@ -30,7 +29,6 @@ import DownloadIcon from '@mui/icons-material/Download';
 import CheckIcon from '@mui/icons-material/Check';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import DeleteIcon from '@mui/icons-material/Delete';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import { QRCodeCanvas } from 'qrcode.react';
 
@@ -39,7 +37,7 @@ import { useFirestore, UrlData } from '../../hooks/useFirestore';
 import { generateShortCode } from '../../utils/generateShortCode';
 
 export default function URLShortenerWidget() {
-  const { user, signInWithGoogle } = useAuth();
+  const { user } = useAuth();
   const { addUrl, getUserUrls, deleteUrl, getUrl } = useFirestore();
 
   // Link Shortener State
@@ -60,7 +58,6 @@ export default function URLShortenerWidget() {
 
   // Historial de Enlaces
   const [userUrls, setUserUrls] = useState<UrlData[]>([]);
-  const [loadingUrls, setLoadingUrls] = useState(false);
   const [copiedUrlCode, setCopiedUrlCode] = useState<string | null>(null);
 
   // Session-based anonymous URLs
@@ -68,14 +65,11 @@ export default function URLShortenerWidget() {
 
   const fetchUserUrls = useCallback(async () => {
     if (!user) return;
-    setLoadingUrls(true);
     try {
       const urls = await getUserUrls(user.uid);
       setUserUrls(urls);
     } catch (err) {
       console.error('Error al cargar enlaces:', err);
-    } finally {
-      setLoadingUrls(false);
     }
   }, [user, getUserUrls]);
 

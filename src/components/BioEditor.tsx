@@ -21,7 +21,6 @@ import {
   FormControlLabel,
   FormControl,
   FormLabel,
-  Tooltip,
   Alert,
   CircularProgress,
   InputAdornment,
@@ -150,50 +149,6 @@ export default function BioEditor() {
     };
     loadUserBio();
   }, [user, getBioByUserId]);
-
-  // Manejo del registro de usuario único (Username Setup)
-  const handleSetupSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSetupError('');
-
-    const slug = usernameInput.trim().toLowerCase();
-    if (slug.length < 3) {
-      setSetupError('El nombre de usuario debe tener al menos 3 caracteres.');
-      return;
-    }
-    if (!/^[a-z0-9-_]+$/.test(slug)) {
-      setSetupError('El nombre de usuario solo puede contener letras minúsculas, números, guiones y guiones bajos.');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      // Validar disponibilidad
-      const isTaken = await getBio(slug);
-      if (isTaken) {
-        setSetupError('Este nombre de usuario ya está ocupado. Intenta con otro.');
-        setLoading(false);
-        return;
-      }
-
-      // Crear bio inicial
-      const newBio: BioData = {
-        ...bioData,
-        userId: user ? user.uid : '',
-        username: slug,
-        createdAt: new Date().toISOString(),
-      };
-
-      await saveBio(newBio);
-      setBioData(newBio);
-      setHasBio(true);
-    } catch (err) {
-      console.error('Error al crear bio:', err);
-      setSetupError(`Error al crear tu página de enlaces: ${err instanceof Error ? err.message : 'Error desconocido'}`);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Guardar cambios en el editor
   const handleSaveBio = async () => {

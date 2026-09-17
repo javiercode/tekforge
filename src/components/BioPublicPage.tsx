@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useFirestore, BioData, BioLink } from '../hooks/useFirestore';
+import { useFirestore, BioData } from '../hooks/useFirestore';
 import {
   Box,
   Container,

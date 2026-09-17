@@ -4,7 +4,6 @@ import {
   Typography,
   Grid,
   Card,
-  CardContent,
   List,
   ListItem,
   ListItemIcon,
