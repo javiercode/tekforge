@@ -221,32 +221,54 @@ export default function BioPublicPage() {
         px: 2,
         fontFamily: fontFamily,
         minHeight: bioData.disposicion === 'mobile' ? '540px' : 'auto',
+        position: 'relative'
       }}
     >
+      {/* Banner superior */}
+      {['banner', 'banner-avatar'].includes(bioData.headerLayout || 'default') && (
+        <Box
+          sx={{
+            width: 'calc(100% + 32px)',
+            height: 120,
+            backgroundImage: `url(${bioData.bannerURL || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80'})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            borderRadius: '16px 16px 0 0',
+            mt: -6, // offset padding
+            mb: bioData.headerLayout === 'banner-avatar' ? 6 : 3,
+            zIndex: 1
+          }}
+        />
+      )}
+
       {/* Foto de Perfil */}
-      <Avatar
-        src={bioData.photoURL}
-        alt={bioData.title}
-        sx={{
-          width: 100,
-          height: 100,
-          border: `3px solid ${bioData.avatarBorderColor || activeTheme.text}`,
-          borderRadius: bioData.avatarShape === 'rounded' ? '16px' : '50%',
-          boxShadow: '0 4px 14px rgba(0,0,0,0.15)',
-          mb: 3,
-          fontSize: '2.5rem',
-          bgcolor: 'secondary.main',
-          color: '#ffffff',
-        }}
-      >
-        {bioData.title?.[0]?.toUpperCase() || 'U'}
-      </Avatar>
+      {['default', 'banner-avatar', 'solo-avatar'].includes(bioData.headerLayout || 'default') && (
+        <Avatar
+          src={bioData.photoURL}
+          alt={bioData.title}
+          sx={{
+            width: 100,
+            height: 100,
+            border: `3px solid ${bioData.avatarBorderColor || activeTheme.text}`,
+            borderRadius: bioData.avatarShape === 'rounded' ? '16px' : '50%',
+            boxShadow: '0 4px 14px rgba(0,0,0,0.15)',
+            mb: 3,
+            mt: bioData.headerLayout === 'banner-avatar' ? -10 : 0, // Negative overlap spacing!
+            fontSize: '2.5rem',
+            bgcolor: 'secondary.main',
+            color: '#ffffff',
+            zIndex: 2
+          }}
+        >
+          {bioData.title?.[0]?.toUpperCase() || 'U'}
+        </Avatar>
+      )}
 
       {/* Título */}
       <Typography
         variant="h5"
         component="h1"
-        sx={{ fontWeight: 800, textAlign: 'center', mb: 1, letterSpacing: '-0.02em', fontFamily: 'inherit' }}
+        sx={{ fontWeight: 800, textAlign: 'center', mb: 1, letterSpacing: '-0.02em', fontFamily: 'inherit', zIndex: 2 }}
       >
         {bioData.title}
       </Typography>
@@ -262,7 +284,8 @@ export default function BioPublicPage() {
             opacity: 0.85,
             fontSize: '1rem',
             maxWidth: '90%',
-            fontFamily: 'inherit'
+            fontFamily: 'inherit',
+            zIndex: 2
           }}
         >
           {bioData.intro}
@@ -280,7 +303,8 @@ export default function BioPublicPage() {
             fontSize: '1rem',
             maxWidth: '90%',
             lineHeight: 1.4,
-            fontFamily: 'inherit'
+            fontFamily: 'inherit',
+            zIndex: 2
           }}
         >
           {bioData.bio}
@@ -289,7 +313,7 @@ export default function BioPublicPage() {
 
       {/* Redes Sociales */}
       {bioData.socials && Object.keys(bioData.socials).some((key) => bioData.socials[key as keyof typeof bioData.socials]) && (
-        <Box sx={{ display: 'flex', gap: 1.5, mb: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
+        <Box sx={{ display: 'flex', gap: 1.5, mb: 3, flexWrap: 'wrap', justifyContent: 'center', zIndex: 2 }}>
           {Object.entries(bioData.socials).map(([platform, value]) => {
             if (!value) return null;
             const url = value.startsWith('http') ? value : `https://${value}`;
@@ -316,6 +340,44 @@ export default function BioPublicPage() {
             );
           })}
         </Box>
+      )}
+
+      {/* Enlace Personalizado */}
+      {bioData.customWebsiteURL && bioData.customWebsiteLabel && (
+        <Button
+          href={bioData.customWebsiteURL.startsWith('http') ? bioData.customWebsiteURL : `https://${bioData.customWebsiteURL}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          variant="outlined"
+          sx={{
+            width: '100%',
+            py: 1.8,
+            px: 3,
+            mb: 3,
+            borderRadius: getBorderRadius(bioData.buttonStyle),
+            bgcolor: 'rgba(255, 255, 255, 0.12)',
+            backdropFilter: 'blur(10px)',
+            color: activeTheme.text,
+            border: `1.5px dashed ${activeTheme.text}`,
+            borderColor: activeTheme.text,
+            fontWeight: 800,
+            textTransform: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 1,
+            fontFamily: 'inherit',
+            zIndex: 2,
+            transition: 'all 0.2s',
+            '&:hover': {
+              bgcolor: 'rgba(255, 255, 255, 0.22)',
+              transform: 'translateY(-2px)',
+              borderStyle: 'dashed',
+            }
+          }}
+        >
+          🌐 {bioData.customWebsiteLabel}
+        </Button>
       )}
 
       {/* Listado de Enlaces/Bloques dinámicos */}

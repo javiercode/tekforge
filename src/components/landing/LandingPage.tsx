@@ -53,7 +53,7 @@ export default function LandingPage() {
         <LandingHome onSelectMenu={handleSelectMenu} onLaunchTool={handleLaunchTool} />
       )}
       {activeMenu === 1 && (
-        <LandingBioView onLaunchTool={handleLaunchTool} />
+        <LandingBioView />
       )}
       {activeMenu === 2 && (
         <LandingQRView />

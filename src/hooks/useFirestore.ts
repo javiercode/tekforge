@@ -61,7 +61,7 @@ export interface BioData {
   createdAt: string;
   views: number;
   
-  // Nuevos campos para prompt/19.md
+  // Nuevos campos para prompt/19.md y prompt/29.md
   nicho?: string;
   typography?: string;
   disposicion?: string;
@@ -69,6 +69,10 @@ export interface BioData {
   avatarBorderColor?: string;
   watermarkVisible?: boolean;
   watermarkText?: string;
+  headerLayout?: 'default' | 'banner' | 'banner-avatar' | 'solo-avatar' | 'full-bg';
+  bannerURL?: string;
+  customWebsiteLabel?: string;
+  customWebsiteURL?: string;
 }
 
 export function useFirestore() {
