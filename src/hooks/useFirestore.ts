@@ -27,6 +27,13 @@ export interface BioLink {
   id: string;
   label: string;
   url: string;
+  type?: 'link' | 'store' | 'media' | 'email';
+  price?: string;
+  cta?: string;
+  provider?: 'YouTube' | 'Spotify' | 'Twitch';
+  input_placeholder?: string;
+  submit_button?: string;
+  style?: 'solid' | 'outline' | 'glass';
 }
 
 export interface BioSocials {
@@ -36,6 +43,8 @@ export interface BioSocials {
   youtube?: string;
   tiktok?: string;
   facebook?: string;
+  github?: string;
+  website?: string;
 }
 
 export interface BioData {
@@ -43,6 +52,7 @@ export interface BioData {
   userId: string;
   title: string;
   bio: string;
+  intro?: string; // Introducción corta, estilo redes sociales
   photoURL: string;
   theme: string; // Preset visual
   buttonStyle: string; // Estilo de botón (e.g., 'rounded', 'pill', 'outline')
@@ -50,6 +60,15 @@ export interface BioData {
   socials: BioSocials;
   createdAt: string;
   views: number;
+  
+  // Nuevos campos para prompt/19.md
+  nicho?: string;
+  typography?: string;
+  disposicion?: string;
+  avatarShape?: 'circle' | 'rounded';
+  avatarBorderColor?: string;
+  watermarkVisible?: boolean;
+  watermarkText?: string;
 }
 
 export function useFirestore() {

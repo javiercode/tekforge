@@ -1,0 +1,10 @@
+/* LandingHome Stylesheet */
+.landing-home-container {
+  display: block;
+}
+.landing-hero-box {
+  transition: all 0.3s ease;
+}
+.hero-circle-1, .hero-circle-2 {
+  pointer-events: none;
+}

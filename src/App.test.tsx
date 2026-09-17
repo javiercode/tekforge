@@ -45,8 +45,8 @@ test('renders TEKFORGE title in navigation', () => {
   expect(titleElements[0]).toBeInTheDocument();
 });
 
-test('renders main CTA heading', () => {
+test('renders main Landing Page CTA heading', () => {
   render(<App />);
-  const headingElement = screen.getByText(/Crea conexiones más fuertes/i);
+  const headingElement = screen.getByText(/Multiplica el Impacto de tu/i);
   expect(headingElement).toBeInTheDocument();
 });
