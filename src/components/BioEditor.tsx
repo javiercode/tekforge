@@ -3,6 +3,8 @@ import { useAuth } from '../hooks/useAuth';
 import { useFirestore, BioData, BioLink } from '../hooks/useFirestore';
 import { QRCodeCanvas } from 'qrcode.react';
 import { THEMES } from './BioPublicPage';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '../firebase/firebase';
 import {
   Box,
   Typography,
@@ -249,27 +251,40 @@ export default function BioEditor() {
     });
   };
 
-  // Manejo de subida de foto en base64
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Manejo de subida de foto a Firebase Storage (Plan spark gratuito, generoso limite de 2 MB)
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const maxSizeInBytes = 50 * 1024; // Límite de 50 KB para Base64 eficiente en Firestore
+    const maxSizeInBytes = 2 * 1024 * 1024; // Generoso límite de 2 MB para fotos
     if (file.size > maxSizeInBytes) {
-      setSaveError('La imagen supera el límite de 50 KB. Por favor selecciona una de menor tamaño.');
+      setSaveError('La imagen supera el límite generoso de 2 MB. Por favor selecciona una más ligera.');
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64String = reader.result as string;
-      setBioData((prev) => ({ ...prev, photoURL: base64String }));
-      setSaveError(''); // Limpiar cualquier error previo
-    };
-    reader.onerror = () => {
-      setSaveError('Error al leer el archivo de imagen.');
-    };
-    reader.readAsDataURL(file);
+    try {
+      setLoading(true);
+      setSaveError('');
+      
+      // Crear una referencia única en Firebase Storage
+      const storageRef = ref(storage, `avatars/${user?.uid || 'anon'}_${Date.now()}_${file.name}`);
+      
+      // Subir archivo
+      const snapshot = await uploadBytes(storageRef, file);
+      
+      // Obtener URL de descarga pública
+      const downloadURL = await getDownloadURL(snapshot.ref);
+      
+      // Actualizar estado de bioData
+      setBioData((prev) => ({ ...prev, photoURL: downloadURL }));
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (err) {
+      console.error('Error al subir a Firebase Storage:', err);
+      setSaveError('Error al subir la imagen a Firebase Storage. Verifica tu conexión.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Copiar link de bio

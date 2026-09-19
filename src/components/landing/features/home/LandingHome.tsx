@@ -174,7 +174,7 @@ export default function LandingHome({ onSelectMenu, onLaunchTool }: LandingHomeP
               variant="contained"
               color="secondary"
               size="large"
-              onClick={() => onLaunchTool(2)}
+              onClick={() => onSelectMenu(1)}
               endIcon={<KeyboardArrowRightIcon />}
               sx={{
                 py: 2,
