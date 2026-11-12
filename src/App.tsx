@@ -1,5 +1,5 @@
 import React from 'react';
-import { HashRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import UrlShortener from './components/UrlShortener';
 import LandingPage from './components/landing/LandingPage';
 import RedirectHandler from './components/RedirectHandler';
@@ -11,7 +11,7 @@ import { Box } from '@mui/material';
 
 function App() {
   return (
-    <HashRouter>
+    <BrowserRouter>
       <Box
         sx={{
           display: 'flex',
@@ -31,7 +31,7 @@ function App() {
         </Body>
         <Footer />
       </Box>
-    </HashRouter>
+    </BrowserRouter>
   );
 }
 
